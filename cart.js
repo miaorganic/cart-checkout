@@ -1,26 +1,38 @@
-let cart = [];
-let total = 0;
+let cart = JSON.parse(localStorage.getItem('store_cart')) || [];
+let total = cart.reduce((sum, item) => sum + item.price * (item.qty || 1), 0);
 
-// Add item to cart
-function addToCart(product, price) {
-  cart.push({ product, price });
-  total += price;
-  displayCart();
+function saveCart() {
+  localStorage.setItem('store_cart', JSON.stringify(cart));
 }
 
-// Show cart contents
 function displayCart() {
   const cartList = document.getElementById('cart');
   cartList.innerHTML = "";
+  total = 0;
+
   cart.forEach(item => {
+    const qty = item.qty || 1;
+    total += item.price * qty;
+
     const li = document.createElement('li');
-    li.textContent = `${item.product} - $${item.price}`;
+    li.textContent = `${item.product || item.name} - $${item.price} × ${qty}`;
     cartList.appendChild(li);
   });
-  document.getElementById('total').textContent = `Total: $${total}`;
+
+  document.getElementById('total').textContent = `Total: $${total.toFixed(2)}`;
 }
 
-// Checkout function
+function addToCart(product, price) {
+  let existing = cart.find(item => item.product === product || item.name === product);
+  if (existing) {
+    existing.qty = (existing.qty || 1) + 1;
+  } else {
+    cart.push({ product, price, qty: 1 });
+  }
+  saveCart();
+  displayCart();
+}
+
 function checkout() {
   if (cart.length === 0) {
     alert("Your cart is empty!");
@@ -32,7 +44,6 @@ function checkout() {
     total: total
   };
 
-  // Send order to your webhook
   fetch("YOUR_WEBHOOK_URL", {
     method: "POST",
     body: JSON.stringify(orderDetails),
@@ -44,6 +55,7 @@ function checkout() {
     alert("Order placed successfully!");
     cart = [];
     total = 0;
+    saveCart();
     displayCart();
   })
   .catch(err => {
@@ -51,3 +63,7 @@ function checkout() {
     alert("Error placing order");
   });
 }
+
+// On page load, display cart from localStorage
+window.onload = displayCart;
+
