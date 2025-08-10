@@ -1,353 +1,45 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Simple Store — Cart & Checkout</title>
-<style>
-  :root{
-    --bg:#faf9f6;
-    --dust-rose:#D6A7A1;
-    --olive-gold:#C2B280;
-    --muted:#666;
-    --card:#fff;
-    --maxw:980px;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-    background:var(--bg);
-    color:#222;
-  }
-  .wrap{max-width:var(--maxw);margin:28px auto;padding:18px}
-  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-  header h1{font-size:20px;margin:0}
-  .layout{display:flex;gap:20px;flex-wrap:wrap}
-  .products{flex:1 1 420px;}
-  .product{ background:var(--card); border-radius:10px; padding:14px; box-shadow:0 1px 6px rgba(0,0,0,0.04); margin-bottom:12px; display:flex; gap:14px; align-items:center;}
-  .product .meta{flex:1}
-  .product h3{margin:0 0 6px 0;font-size:16px}
-  .price{font-weight:600;color:#333}
-  .old-price{color:#999;text-decoration:line-through;margin-left:8px;font-weight:400}
-  .btn { background:var(--dust-rose); color:#fff; border:0; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:14px; box-shadow:0 3px 6px rgba(0,0,0,0.08); }
-  .btn:hover{ background:var(--olive-gold); transform:scale(1.02) }
-
-  .cartbox{flex:1 1 320px; background:var(--card); padding:14px; border-radius:10px; box-shadow:0 1px 6px rgba(0,0,0,0.04);}
-  .cart-items{max-height:320px; overflow:auto; margin-bottom:12px}
-  .cart-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0}
-  .cart-row .label{flex:1}
-  .qty {width:64px}
-  .muted{color:var(--muted);font-size:13px}
-  .summary{padding:8px 0;margin-top:8px;border-top:1px dashed #eee}
-  .total-row{display:flex;justify-content:space-between;align-items:center;font-weight:700;margin-top:8px}
-  .small{font-size:13px;color:#666}
-
-  form.checkout { margin-top:12px; display:block; }
-  form .field{margin-bottom:10px}
-  form input, form select, form textarea {
-    width:100%; padding:10px;border:1px solid #ddd;border-radius:6px;background:#fff;
-  }
-  .row{display:flex;gap:10px}
-  .row .col{flex:1}
-  .note{font-size:13px;color:#444;margin-bottom:10px}
-
-  .actions{display:flex;gap:8px; margin-top:10px}
-  .ghost{background:#fff;color:#333;border:1px solid #ddd}
-  .mini{padding:8px 10px;font-size:14px}
-
-  .thank{background:#eaf7eb;border-radius:8px;padding:18px;margin-top:12px;display:none}
-
-  @media (max-width:880px){
-    .layout{flex-direction:column}
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="wrap">
+
     <header>
-      <h1>Your Store</h1>
-      <div>
-        <button id="downloadOrdersBtn" class="btn mini ghost">Download orders CSV</button>
-      </div>
+        <h1>Your Shopping Cart</h1>
     </header>
 
-    <div class="layout">
-      <section class="products" id="productsList"></section>
+    <main>
+        <section id="cart">
+            <table id="cart-items">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                        <th>Remove</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Cart items will be inserted here by JavaScript -->
+                </tbody>
+            </table>
 
-      <aside class="cartbox">
-        <h3>Your Cart</h3>
-        <div class="cart-items" id="cartItemsContainer"></div>
-
-        <div class="summary">
-          <div class="small">Subtotal <span id="subtotalText" style="float:right">Rs. 0</span></div>
-          <div class="small">Delivery charges <span id="deliveryText" style="float:right">Rs. 0</span></div>
-          <div class="total-row">Total <span id="totalText">Rs. 0</span></div>
-        </div>
-
-        <div style="margin-top:8px">
-          <button id="checkoutBtn" class="btn" style="width:100%">Proceed to Checkout</button>
-        </div>
-
-        <div style="margin-top:12px">
-          <button id="clearCartBtn" class="btn ghost" style="width:100%">Clear cart</button>
-        </div>
-
-        <form id="checkoutForm" class="checkout" style="display:none" autocomplete="on">
-          <div class="note">Please provide shipping details. Fields marked * are required.</div>
-
-          <div class="field"><input name="email" type="email" placeholder="Email Address *" required></div>
-
-          <div class="field"><input name="firstName" type="text" placeholder="First Name *" required></div>
-          <div class="field"><input name="middleName" type="text" placeholder="Middle Name (optional)"></div>
-          <div class="field"><input name="lastName" type="text" placeholder="Last Name *" required></div>
-
-          <div class="row">
-            <div class="col field"><input name="phone" type="tel" placeholder="Phone Number *" required></div>
-            <div class="col field"><input name="zip" type="text" placeholder="Zip / Postal (optional)"></div>
-          </div>
-
-          <div class="field"><textarea name="address" rows="2" placeholder="Address Line 1 *" required></textarea></div>
-          <div class="field"><input name="address2" type="text" placeholder="Address Line 2 (optional)"></div>
-
-          <div class="row">
-            <div class="col field"><input name="city" type="text" placeholder="City / Town *" required></div>
-            <div class="col field"><input name="state" type="text" placeholder="State / Country *" required></div>
-          </div>
-
-          <div class="field">
-            <label class="small">Payment method *</label>
-            <select name="paymentMethod" required>
-              <option value="">-- Select --</option>
-              <option value="cod">Cash on Delivery (COD)</option>
-              <option value="jazzcash">Online - JazzCash</option>
-              <option value="easypaisa">Online - EasyPaisa</option>
-              <option value="bank">Online - Bank Transfer</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label class="small">Billing address</label>
-            <select id="billingChoice" name="billingChoice">
-              <option value="same">Same as shipping</option>
-              <option value="different">Use different billing address</option>
-            </select>
-          </div>
-
-          <div id="billingFields" style="display:none">
-            <div class="field"><input name="billingAddress" type="text" placeholder="Billing address"></div>
-            <div class="row">
-              <div class="col field"><input name="billingCity" type="text" placeholder="Billing city"></div>
-              <div class="col field"><input name="billingState" type="text" placeholder="Billing state"></div>
+            <div id="cart-summary">
+                <p><strong>Grand Total:</strong> <span id="grand-total">0</span></p>
+                <button id="checkout-btn">Proceed to Checkout</button>
             </div>
-            <div class="field"><input name="billingPhone" type="tel" placeholder="Billing phone (optional)"></div>
-          </div>
+        </section>
+    </main>
 
-          <div style="margin-top:8px">
-            <button type="submit" class="btn" style="width:100%">Place Order</button>
-          </div>
-        </form>
+    <footer>
+        <p>&copy; 2025 Ima Organics</p>
+    </footer>
 
-        <div id="thankYou" class="thank">
-          <h3>Thank you — your order is received</h3>
-          <p>We will contact you via email to confirm and proceed with payment if needed.</p>
-        </div>
-      </aside>
-    </div>
-  </div>
-
-<script>
-/* -------- CONFIG: change these after you deploy Apps Script webhook -------- */
-const deliveryCharge = 200;
-let webhookUrl = "";      // <-- PASTE your Apps Script web app URL here (leave empty to skip POST)
-let webhookSecret = "";   // <-- PASTE the secret token you pick (e.g. "myVerySecretToken"), must match Apps Script
-/* ------------------------------------------------------------------------- */
-
-/* products: edit here only */
-const products = [
-  { id:'p1', name:'Oat & Honey Soap', price:500, discount:0.0, description:'Gentle nourishing soap' },
-  { id:'p2', name:'Charcoal Mint Soap', price:450, discount:0.1, description:'Deep-clean soap' },
-  { id:'p3', name:'Lavender Bliss Soap', price:480, discount:0.15, description:'Calming floral soap' }
-];
-
-function formatPKR(n){ return 'Rs. ' + Number(n).toFixed(0); }
-function getFinalPrice(p){ return +(p.price * (1 - (p.discount||0))).toFixed(2); }
-
-/* CART stored under 'store_cart' in localStorage */
-let cart = JSON.parse(localStorage.getItem('store_cart')||'[]');
-
-function saveCart(){ localStorage.setItem('store_cart', JSON.stringify(cart)); renderCart(); }
-
-function addToCart(productId){
-  const prod = products.find(p=>p.id===productId); if(!prod) return;
-  const finalPrice = getFinalPrice(prod);
-  const existing = cart.find(i=>i.id===productId);
-  if(existing){ existing.qty += 1; } else { cart.push({ id: productId, name: prod.name, price: finalPrice, qty: 1 }); }
-  saveCart();
-}
-
-/* render products */
-const productsList = document.getElementById('productsList');
-function renderProducts(){
-  productsList.innerHTML = '';
-  products.forEach(p=>{
-    const final = getFinalPrice(p);
-    const div = document.createElement('div');
-    div.className = 'product';
-    div.innerHTML = `
-      <div class="meta">
-        <h3>${p.name}</h3>
-        <div class="muted">${p.description || ''}</div>
-        <div style="margin-top:8px">
-          <span class="price">${formatPKR(final)}</span>
-          ${p.discount ? `<span class="old-price">${formatPKR(p.price)}</span>` : ''}
-        </div>
-      </div>
-      <div>
-        <button class="btn" onclick="addToCart('${p.id}')">Add to Cart</button>
-      </div>
-    `;
-    productsList.appendChild(div);
-  });
-}
-
-/* render cart */
-const cartItemsContainer = document.getElementById('cartItemsContainer');
-function renderCart(){
-  cartItemsContainer.innerHTML = '';
-  if(cart.length===0){
-    cartItemsContainer.innerHTML = '<div class="muted">Your cart is empty.</div>';
-    document.getElementById('subtotalText').innerText = formatPKR(0);
-    document.getElementById('deliveryText').innerText = formatPKR(0);
-    document.getElementById('totalText').innerText = formatPKR(0);
-    return;
-  }
-  let subtotal = 0;
-  cart.forEach((item, idx)=>{
-    const row = document.createElement('div');
-    row.className = 'cart-row';
-    const itemTotal = item.price * item.qty;
-    subtotal += itemTotal;
-    row.innerHTML = `
-      <div class="label">
-        <div><strong>${item.name}</strong></div>
-        <div class="muted">${formatPKR(item.price)} × ${item.qty}</div>
-      </div>
-      <div style="text-align:right">
-        <div>${formatPKR(itemTotal)}</div>
-        <div style="margin-top:6px">
-          <button class="ghost mini" onclick="decreaseQty(${idx})" style="margin-right:6px">−</button>
-          <button class="ghost mini" onclick="increaseQty(${idx})">+</button>
-          <div style="height:6px"></div>
-          <button class="ghost mini" onclick="removeItem(${idx})" style="margin-top:6px">Remove</button>
-        </div>
-      </div>
-    `;
-    cartItemsContainer.appendChild(row);
-  });
-  document.getElementById('subtotalText').innerText = formatPKR(subtotal);
-  document.getElementById('deliveryText').innerText = formatPKR(deliveryCharge);
-  document.getElementById('totalText').innerText = formatPKR(subtotal + deliveryCharge);
-}
-
-function increaseQty(i){ cart[i].qty++; saveCart(); }
-function decreaseQty(i){ if(cart[i].qty>1) cart[i].qty--; else cart.splice(i,1); saveCart(); }
-function removeItem(i){ cart.splice(i,1); saveCart(); }
-
-document.getElementById('clearCartBtn').addEventListener('click', ()=>{
-  if(!confirm('Clear cart?')) return;
-  cart = []; saveCart();
-});
-
-const checkoutBtn = document.getElementById('checkoutBtn');
-const checkoutForm = document.getElementById('checkoutForm');
-checkoutBtn.addEventListener('click', ()=>{
-  if(cart.length===0){ alert('Your cart is empty. Please add products.'); return; }
-  checkoutForm.style.display = 'block';
-  checkoutBtn.scrollIntoView({behavior:'smooth',block:'center'});
-});
-
-document.getElementById('billingChoice').addEventListener('change', (e)=>{
-  document.getElementById('billingFields').style.display = e.target.value==='different' ? 'block':'none';
-});
-
-renderProducts(); renderCart();
-
-function collectOrderData(form){
-  const fd = new FormData(form);
-  const customer = {
-    email: fd.get('email'),
-    firstName: fd.get('firstName'),
-    middleName: fd.get('middleName'),
-    lastName: fd.get('lastName'),
-    phone: fd.get('phone'),
-    zip: fd.get('zip'),
-    address: fd.get('address'),
-    address2: fd.get('address2'),
-    city: fd.get('city'),
-    state: fd.get('state'),
-    paymentMethod: fd.get('paymentMethod'),
-    billingChoice: fd.get('billingChoice'),
-    billingAddress: fd.get('billingAddress'),
-    billingCity: fd.get('billingCity'),
-    billingState: fd.get('billingState'),
-    billingPhone: fd.get('billingPhone')
-  };
-  const items = cart.map(i=>({ id:i.id, name:i.name, price:i.price, qty:i.qty }));
-  let subtotal = items.reduce((s,it)=>s + it.price*it.qty,0);
-  const total = subtotal + deliveryCharge;
-  return { customer, items, subtotal, deliveryCharge, total, createdAt: (new Date()).toISOString() };
-}
-
-document.getElementById('checkoutForm').addEventListener('submit', async function(e){
-  e.preventDefault();
-  if(cart.length===0){ alert('Cart is empty'); return; }
-  const order = collectOrderData(e.target);
-
-  // Save locally for owner records
-  const savedOrders = JSON.parse(localStorage.getItem('store_orders')||'[]');
-  savedOrders.push(order);
-  localStorage.setItem('store_orders', JSON.stringify(savedOrders));
-
-  // Optional: POST to webhook
-  if(webhookUrl && webhookUrl.length>5){
-    try {
-      await fetch(webhookUrl, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ secret: webhookSecret, order })
-      });
-    } catch(err){
-      console.warn('Webhook send failed', err);
-    }
-  }
-
-  // Clear cart, hide form, show thank you
-  cart = []; saveCart();
-  checkoutForm.style.display='none';
-  document.getElementById('thankYou').style.display='block';
-});
-
-/* Download orders (owner) */
-function ordersToCSV(orders){
-  const header = ["createdAt","email","firstName","lastName","phone","address","city","state","items","subtotal","deliveryCharge","total"];
-  const rows = orders.map(o=>{
-    const items = o.items.map(it=>`${it.name} x${it.qty} (${it.price})`).join(' | ');
-    return [o.createdAt, o.customer.email, o.customer.firstName, o.customer.lastName, o.customer.phone, o.customer.address + (o.customer.address2?(' / '+o.customer.address2):''), o.customer.city, o.customer.state, items, o.subtotal, o.deliveryCharge, o.total];
-  });
-  const csv = [header, ...rows].map(r=>r.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
-  return csv;
-}
-document.getElementById('downloadOrdersBtn').addEventListener('click', ()=>{
-  const orders = JSON.parse(localStorage.getItem('store_orders')||'[]');
-  if(!orders.length){ alert('No orders saved locally yet.'); return; }
-  const csv = ordersToCSV(orders);
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'orders.csv'; a.click();
-  URL.revokeObjectURL(url);
-});
-</script>
+    <script src="cart.js"></script>
 </body>
 </html>
