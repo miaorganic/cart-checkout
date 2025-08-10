@@ -1,6 +1,11 @@
+<!DOCTYPE html>
 <!doctype html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+    <link rel="stylesheet" href="style.css">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Cart & Checkout</title>
@@ -48,14 +53,45 @@
 </style>
 </head>
 <body>
+
   <div class="wrap">
     <header>
+        <h1>Your Shopping Cart</h1>
       <h1>Your Cart</h1>
       <div>
         <button id="downloadOrdersBtn" class="btn mini ghost">Download orders CSV</button>
       </div>
     </header>
 
+    <main>
+        <section id="cart">
+            <table id="cart-items">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                        <th>Remove</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Cart items will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+
+            <div id="cart-summary">
+                <p><strong>Grand Total:</strong> <span id="grand-total">0</span></p>
+                <button id="checkout-btn">Proceed to Checkout</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Ima Organics</p>
+    </footer>
+
+    <script src="cart.js"></script>
     <div class="cartbox">
       <div class="cart-items" id="cartItemsContainer"></div>
 
