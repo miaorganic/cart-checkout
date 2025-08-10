@@ -1,34 +1,54 @@
-// Read cart from localStorage
-let cart = JSON.parse(localStorage.getItem('store_cart')) || [];
+let cart = [];
+let total = 0;
 
-function renderCart() {
-  const container = document.getElementById('cartItemsContainer');
-  const totalEl = document.getElementById('totalText'); // Adjust ID to your total display element
-  
-  if (!container) return; // Make sure element exists
-  
-  container.innerHTML = '';
+// Add item to cart
+function addToCart(product, price) {
+  cart.push({ product, price });
+  total += price;
+  displayCart();
+}
+
+// Show cart contents
+function displayCart() {
+  const cartList = document.getElementById('cart');
+  cartList.innerHTML = "";
+  cart.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = `${item.product} - $${item.price}`;
+    cartList.appendChild(li);
+  });
+  document.getElementById('total').textContent = `Total: $${total}`;
+}
+
+// Checkout function
+function checkout() {
   if (cart.length === 0) {
-    container.innerHTML = '<p>Your cart is empty.</p>';
-    totalEl.textContent = 'Rs. 0';
+    alert("Your cart is empty!");
     return;
   }
 
-  let total = 0;
-  cart.forEach(item => {
-    const itemTotal = item.price * item.qty;
-    total += itemTotal;
+  const orderDetails = {
+    cart: cart,
+    total: total
+  };
 
-    // Create display row (adjust to your HTML structure)
-    const row = document.createElement('div');
-    row.textContent = `${item.name} — Rs. ${item.price} × ${item.qty} = Rs. ${itemTotal}`;
-    container.appendChild(row);
+  // Send order to your webhook
+  fetch("YOUR_WEBHOOK_URL", {
+    method: "POST",
+    body: JSON.stringify(orderDetails),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+  .then(res => {
+    alert("Order placed successfully!");
+    cart = [];
+    total = 0;
+    displayCart();
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Error placing order");
   });
-
-  totalEl.textContent = 'Rs. ' + total;
 }
-
-// Call this once when cart page loads
-window.onload = renderCart;
-
 
